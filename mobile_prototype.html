@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>视频分析系统 - 移动端原型</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #F3F4F6;
+            color: #1F2937;
+            line-height: 1.5;
+        }
+
+        /* 页面容器 */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* 顶部导航栏 */
+        .top-nav {
+            background-color: #2563EB;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-nav h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* 内容区域 */
+        .content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        /* 底部导航栏 */
+        .bottom-nav {
+            background-color: white;
+            border-top: 1px solid #E5E7EB;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #4B5563;
+            font-size: 12px;
+        }
+
+        .nav-item.active {
+            color: #2563EB;
+        }
+
+        .nav-item i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        /* 通用组件样式 */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            background-color: #2563EB;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #1D4ED8;
+        }
+
+        .btn-secondary {
+            background-color: #E5E7EB;
+            color: #1F2937;
+        }
+
+        .btn-secondary:hover {
+            background-color: #D1D5DB;
+        }
+
+        .btn-danger {
+            background-color: #EF4444;
+        }
+
+        .btn-danger:hover {
+            background-color: #DC2626;
+        }
+
+        .input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #E5E7EB;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #E5E7EB;
+            font-size: 14px;
+        }
+
+        .table th {
+            font-weight: 600;
+            color: #374151;
+            background-color: #F9FAFB;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .badge-warning {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        .badge-error {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+
+        /* 页面特定样式 */
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 16px;
+        }
+
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+            background-color: white;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-title {
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 24px;
+            color: #2563EB;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2563EB;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6B7280;
+            margin-top: 4px;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .action-btn {
+            background-color: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: #F3F4F6;
+            border-color: #D1D5DB;
+        }
+
+        .action-btn i {
+            font-size: 24px;
+            color: #2563EB;
+            margin-bottom: 4px;
+        }
+
+        .action-btn span {
+            display: block;
+            font-size: 12px;
+            color: #374151;
+        }
+
+        .video-player {
+            width: 100%;
+            height: 200px;
+            background-color: #000;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .version-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .version-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .version-number {
+            font-weight: 600;
+            color: #2563EB;
+        }
+
+        .version-info {
+            font-size: 12px;
+            color: #6B7280;
+            margin-bottom: 4px;
+        }
+
+        /* 隐藏所有页面，只显示当前页面 */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* 加载状态 */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: #6B7280;
+        }
+
+        /* 提示信息 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #10B981;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+        }
+
+        .toast.error {
+            background-color: #EF4444;
+        }
+
+        .toast.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- 提示信息 -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 登录页面 -->
+    <div id="login-page" class="page active">
+        <div class="login-container">
+            <div class="login-form">
+                <h1 class="login-title">视频分析系统</h1>
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="input" id="username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="input" id="password" placeholder="请输入密码">
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" style="margin-right: 6px;"> 记住我
+                    </label>
+                    <a href="#" style="font-size: 12px; color: #2563EB;">忘记密码?</a>
+                </div>
+                <button class="btn" style="width: 100%;" onclick="login()">登录</button>
+                <div style="text-align: center; margin-top: 16px; font-size: 14px;">
+                    还没有账号? <a href="#" style="color: #2563EB;">立即注册</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主应用容器 -->
+    <div id="app-container" class="app-container" style="display: none;">
+        <!-- 顶部导航栏 -->
+        <header class="top-nav">
+            <button class="menu-btn" onclick="toggleMenu()">&#9776;</button>
+            <h1 id="page-title">首页</h1>
+            <span style="width: 24px;"></span>
+        </header>
+
+        <!-- 内容区域 -->
+        <main class="content">
+            <!-- 首页/仪表盘 -->
+            <div id="dashboard-page" class="page active">
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">快捷操作</h2>
+                <div class="action-grid">
+                    <div class="action-btn" onclick="navigateTo('video-management-page')">
+                        <i>&#128250;</i>
+                        <span>新建分析</span>
+                    </div>
+                    <div class="action-btn" onclick="syncData()">
+                        <i>&#8635;</i>
+                        <span>同步数据</span>
+                    </div>
+                    <div class="action-btn" onclick="triggerCheck()">
+                        <i>&#9998;</i>
+                        <span>触发校验</span>
+                    </div>
+                    <div class="action-btn" onclick="navigateTo('log-management-page')">
+                        <i>&#128221;</i>
+                        <span>查看日志</span>
+                    </div>
+                    <div class="action-btn" onclick="navigateTo('version-management-page')">
+                        <i>&#128279;</i>
+                        <span>版本管理</span>
+                    </div>
+                    <div class="action-btn" onclick="navigateTo('conflict-management-page')">
+                        <i>&#9888;</i>
+                        <span>冲突管理</span>
+                    </div>
+                </div>
+
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">系统概览</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">待处理任务</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">35</div>
+                        <div class="stat-label">今日完成</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">待解决冲突</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">在线终端</div>
+                    </div>
+                </div>
+
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">系统状态</h2>
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>CPU使用率</span>
+                        <span>45%</span>
+                    </div>
+                    <div style="width: 100%; height: 6px; background-color: #E5E7EB; border-radius: 3px; overflow: hidden;">
+                        <div style="width: 45%; height: 100%; background-color: #2563EB; border-radius: 3px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 12px; margin-bottom: 8px;">
+                        <span>内存使用率</span>
+                        <span>68%</span>
+                    </div>
+                    <div style="width: 100%; height: 6px; background-color: #E5E7EB; border-radius: 3px; overflow: hidden;">
+                        <div style="width: 68%; height: 100%; background-color: #2563EB; border-radius: 3px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 12px; margin-bottom: 8px;">
+                        <span>磁盘使用率</span>
+                        <span>72%</span>
+                    </div>
+                    <div style="width: 100%; height: 6px; background-color: #E5E7EB; border-radius: 3px; overflow: hidden;">
+                        <div style="width: 72%; height: 100%; background-color: #F59E0B; border-radius: 3px;"></div>
+                    </div>
+                </div>
+
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">最新分析结果</h2>
+                <div class="card">
+                    <div style="padding: 12px 0; border-bottom: 1px solid #E5E7EB; cursor: pointer;" onclick="viewAnalysis('an123')">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 500;">视频1</span>
+                            <span class="badge badge-success">完成</span>
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">
+                            分析ID: an123 | 终端ID: term001 | 版本: v1.2.0
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">
+                            置信度: 0.92 | 2026-01-17 10:00:00
+                        </div>
+                    </div>
+                    <div style="padding: 12px 0; border-bottom: 1px solid #E5E7EB; cursor: pointer;" onclick="viewAnalysis('an124')">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 500;">视频2</span>
+                            <span class="badge badge-success">完成</span>
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">
+                            分析ID: an124 | 终端ID: term002 | 版本: v1.0.1
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">
+                            置信度: 0.88 | 2026-01-17 09:30:00
+                        </div>
+                    </div>
+                    <div style="padding: 12px 0; cursor: pointer;" onclick="viewAnalysis('an125')">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 500;">视频3</span>
+                            <span class="badge badge-warning">进行中</span>
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">
+                            分析ID: an125 | 终端ID: term003 | 版本: v1.0.0
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">
+                            置信度: 0.75 | 2026-01-17 09:00:00
+                        </div>
+                    </div>
+                </div>
+
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">待解决冲突</h2>
+                <div class="card">
+                    <div style="padding: 12px 0; border-bottom: 1px solid #E5E7EB; cursor: pointer;" onclick="viewConflict('cf456')">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 500;">标签冲突</span>
+                            <span class="badge badge-error">高</span>
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">
+                            冲突ID: cf456 | 分析ID: an123
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">
+                            涉及终端: term001/002 | 2026-01-17 10:30:00
+                        </div>
+                    </div>
+                    <div style="padding: 12px 0; cursor: pointer;" onclick="viewConflict('cf457')">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 500;">摘要冲突</span>
+                            <span class="badge badge-warning">中</span>
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">
+                            冲突ID: cf457 | 分析ID: an125
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">
+                            涉及终端: term003/004 | 2026-01-17 09:45:00
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 视频分析结果详情页 -->
+            <div id="analysis-detail-page" class="page">
+                <button class="btn btn-secondary" onclick="navigateTo('dashboard-page')" style="margin-bottom: 16px;">
+                    &#8592; 返回
+                </button>
+
+                <div class="video-player">
+                    <span>视频播放器</span>
+                </div>
+
+                <div class="card">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">分析信息</h3>
+                    <div style="font-size: 14px; margin-bottom: 8px;">
+                        <strong>视频名称:</strong> <span id="detail-video-name">视频1</span>
+                    </div>
+                    <div style="font-size: 14px; margin-bottom: 8px;">
+                        <strong>分析ID:</strong> <span id="detail-analysis-id">an123</span>
+                    </div>
+                    <div style="font-size: 14px; margin-bottom: 8px;">
+                        <strong>终端ID:</strong> <span id="detail-terminal-id">term001</span>
+                    </div>
+                    <div style="font-size: 14px; margin-bottom: 8px;">
+                        <strong>当前版本:</strong> <span id="detail-version">v1.2.0</span>
+                    </div>
+                    <div style="font-size: 14px; margin-bottom: 8px;">
+                        <strong>分析状态:</strong> <span class="badge badge-success">完成</span>
+                    </div>
+                    <div style="font-size: 14px; margin-bottom: 8px;">
+                        <strong>置信度:</strong> <span id="detail-confidence">0.92</span>
+                    </div>
+                    <div style="font-size: 12px; color: #6B7280;">
+                        <strong>创建时间:</strong> 2026-01-15 10:00:00<br>
+                        <strong>更新时间:</strong> 2026-01-17 10:00:00
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">分析结果</h3>
+                    <div style="margin-bottom: 16px;">
+                        <h4 style="font-size: 14px; font-weight: 500; margin-bottom: 8px; cursor: pointer;" onclick="toggleSection('tags-section')">
+                            ▼ 标签
+                        </h4>
+                        <div id="tags-section">
+                            <div style="padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>人物</span>
+                                    <span style="font-size: 12px; color: #6B7280;">0.95</span>
+                                </div>
+                                <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">
+                                    帧范围: [0, 100]
+                                </div>
+                            </div>
+                            <div style="padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>汽车</span>
+                                    <span style="font-size: 12px; color: #6B7280;">0.88</span>
+                                </div>
+                                <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">
+                                    帧范围: [50, 150]
+                                </div>
+                            </div>
+                            <div style="padding: 8px 0;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>道路</span>
+                                    <span style="font-size: 12px; color: #6B7280;">0.92</span>
+                                </div>
+                                <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">
+                                    帧范围: [0, 200]
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <h4 style="font-size: 14px; font-weight: 500; margin-bottom: 8px; cursor: pointer;" onclick="toggleSection('summary-section')">
+                            ▼ 摘要
+                        </h4>
+                        <div id="summary-section">
+                            <p style="font-size: 14px; color: #374151;">
+                                视频中包含一个人在行走，背景有一辆汽车经过。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 500; margin-bottom: 8px; cursor: pointer;" onclick="toggleSection('keyframes-section')">
+                            ▼ 关键帧
+                        </h4>
+                        <div id="keyframes-section" style="display: flex; gap: 8px; overflow-x: auto;">
+                            <div style="width: 80px; height: 60px; background-color: #F3F4F6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                帧1
+                            </div>
+                            <div style="width: 80px; height: 60px; background-color: #F3F4F6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                帧2
+                            </div>
+                            <div style="width: 80px; height: 60px; background-color: #F3F4F6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                帧3
+                            </div>
+                            <div style="width: 80px; height: 60px; background-color: #F3F4F6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                帧4
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">版本历史</h3>
+                    <div style="padding: 12px 0; border-bottom: 1px solid #E5E7EB;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 500; color: #2563EB;">v1.2.0</span>
+                            <span class="badge badge-success">当前</span>
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">
+                            终端ID: term001 | 变更类型: 更新 | 2026-01-17 10:00:00
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">
+                            变更描述: 更新标签和摘要
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 8px;">
+                                查看
+                            </button>
+                            <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;">
+                                恢复
+                            </button>
+                        </div>
+                    </div>
+                    <div style="padding: 12px 0; border-bottom: 1px solid #E5E7EB;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 500;">v1.1.0</span>
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">
+                            终端ID: term002 | 变更类型: 合并 | 2026-01-16 15:00:00
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">
+                            变更描述: 合并终端数据
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 8px;">
+                                查看
+                            </button>
+                            <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;">
+                                恢复
+                            </button>
+                        </div>
+                    </div>
+                    <div style="padding: 12px 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 500;">v1.0.0</span>
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">
+                            终端ID: term001 | 变更类型: 创建 | 2026-01-15 10:00:00
+                        </div>
+                        <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">
+                            变更描述: 初始分析
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 8px;">
+                                查看
+                            </button>
+                            <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;">
+                                恢复
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                    <button class="btn" style="flex: 1;" onclick="navigateTo('version-management-page')">
+                        查看版本历史
+                    </button>
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="compareVersions()">
+                        对比版本差异
+                    </button>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="navigateTo('conflict-management-page')">
+                        解决冲突
+                    </button>
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="lockAnalysis()">
+                        锁定分析结果
+                    </button>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="syncAnalysis()">
+                        同步到其他终端
+                    </button>
+                </div>
+            </div>
+
+            <!-- 版本管理页面 -->
+            <div id="version-management-page" class="page">
+                <button class="btn btn-secondary" onclick="navigateTo('dashboard-page')" style="margin-bottom: 16px;">
+                    &#8592; 返回
+                </button>
+
+                <div class="card" style="margin-bottom: 16px;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" class="input" placeholder="搜索版本..." style="flex: 1;">
+                    </div>
+                    <div style="display: flex; gap: 8px; overflow-x: auto;">
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有终端</button>
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有分析ID</button>
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有状态</button>
+                    </div>
+                </div>
+
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">版本列表</h2>
+                <div>
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">v1.2.0</span>
+                            <div>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 4px;" onclick="viewAnalysis('an123')">
+                                    查看
+                                </button>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;">
+                                    恢复
+                                </button>
+                            </div>
+                        </div>
+                        <div class="version-info">分析ID: an123 | 终端ID: term001</div>
+                        <div class="version-info">父版本: v1.1.0 | 变更类型: 更新</div>
+                        <div class="version-info">创建时间: 2026-01-17 10:00:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">变更描述: 更新标签和摘要</div>
+                    </div>
+
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">v1.1.0</span>
+                            <div>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 4px;" onclick="viewAnalysis('an123')">
+                                    查看
+                                </button>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;">
+                                    恢复
+                                </button>
+                            </div>
+                        </div>
+                        <div class="version-info">分析ID: an123 | 终端ID: term002</div>
+                        <div class="version-info">父版本: v1.0.0 | 变更类型: 合并</div>
+                        <div class="version-info">创建时间: 2026-01-16 15:00:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">变更描述: 合并终端数据</div>
+                    </div>
+
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">v1.0.1</span>
+                            <div>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 4px;" onclick="viewAnalysis('an124')">
+                                    查看
+                                </button>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;">
+                                    恢复
+                                </button>
+                            </div>
+                        </div>
+                        <div class="version-info">分析ID: an124 | 终端ID: term003</div>
+                        <div class="version-info">父版本: v1.0.0 | 变更类型: 更新</div>
+                        <div class="version-info">创建时间: 2026-01-16 10:00:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">变更描述: 更新摘要</div>
+                    </div>
+
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">v1.0.0</span>
+                            <div>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 4px;" onclick="viewAnalysis('an123')">
+                                    查看
+                                </button>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;">
+                                    恢复
+                                </button>
+                            </div>
+                        </div>
+                        <div class="version-info">分析ID: an123 | 终端ID: term001</div>
+                        <div class="version-info">父版本: - | 变更类型: 创建</div>
+                        <div class="version-info">创建时间: 2026-01-15 10:00:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">变更描述: 初始分析</div>
+                    </div>
+
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">v1.0.0</span>
+                            <div>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 4px;" onclick="viewAnalysis('an124')">
+                                    查看
+                                </button>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;">
+                                    恢复
+                                </button>
+                            </div>
+                        </div>
+                        <div class="version-info">分析ID: an124 | 终端ID: term003</div>
+                        <div class="version-info">父版本: - | 变更类型: 创建</div>
+                        <div class="version-info">创建时间: 2026-01-15 10:00:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">变更描述: 初始分析</div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 24px;">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">版本对比</h3>
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                        <select class="input" style="flex: 1;">
+                            <option>v1.0.0</option>
+                            <option selected>v1.1.0</option>
+                            <option>v1.2.0</option>
+                        </select>
+                        <span>vs</span>
+                        <select class="input" style="flex: 1;">
+                            <option>v1.0.0</option>
+                            <option>v1.1.0</option>
+                            <option selected>v1.2.0</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <div style="flex: 1;">
+                            <h4 style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">版本1差异</h4>
+                            <div style="font-size: 12px; color: #374151;">
+                                • 标签: 无<br>
+                                • 摘要: 原始摘要
+                            </div>
+                        </div>
+                        <div style="flex: 1;">
+                            <h4 style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">版本2差异</h4>
+                            <div style="font-size: 12px; color: #374151;">
+                                • 标签: +汽车<br>
+                                • 摘要: 更新后的摘要
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 冲突管理页面 -->
+            <div id="conflict-management-page" class="page">
+                <button class="btn btn-secondary" onclick="navigateTo('dashboard-page')" style="margin-bottom: 16px;">
+                    &#8592; 返回
+                </button>
+
+                <div class="card" style="margin-bottom: 16px;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" class="input" placeholder="搜索冲突..." style="flex: 1;">
+                    </div>
+                    <div style="display: flex; gap: 8px; overflow-x: auto;">
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有类型</button>
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有级别</button>
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有状态</button>
+                    </div>
+                </div>
+
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">冲突列表</h2>
+                <div>
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">cf456</span>
+                            <div>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 4px;" onclick="viewConflictDetail('cf456')">
+                                    查看
+                                </button>
+                                <button class="btn" style="font-size: 12px; padding: 4px 8px;">
+                                    解决
+                                </button>
+                            </div>
+                        </div>
+                        <div class="version-info">冲突类型: 标签冲突</div>
+                        <div class="version-info">分析ID: an123 | 优先级: 高</div>
+                        <div class="version-info">涉及终端: term001/term002</div>
+                        <div class="version-info">创建时间: 2026-01-17 10:30:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">冲突描述: 不同终端对同一视频生成了不同的标签</div>
+                    </div>
+                    
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">cf457</span>
+                            <div>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 4px;" onclick="viewConflictDetail('cf457')">
+                                    查看
+                                </button>
+                                <button class="btn" style="font-size: 12px; padding: 4px 8px;">
+                                    解决
+                                </button>
+                            </div>
+                        </div>
+                        <div class="version-info">冲突类型: 摘要冲突</div>
+                        <div class="version-info">分析ID: an124 | 优先级: 中</div>
+                        <div class="version-info">涉及终端: term003/term004</div>
+                        <div class="version-info">创建时间: 2026-01-17 09:45:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">冲突描述: 终端term003和term004对同一视频生成了不同的摘要</div>
+                    </div>
+                    
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">cf458</span>
+                            <div>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 4px;" onclick="viewConflictDetail('cf458')">
+                                    查看
+                                </button>
+                                <button class="btn" style="font-size: 12px; padding: 4px 8px;">
+                                    解决
+                                </button>
+                            </div>
+                        </div>
+                        <div class="version-info">冲突类型: ID重复</div>
+                        <div class="version-info">分析ID: an125 | 优先级: 高</div>
+                        <div class="version-info">涉及终端: term005/term006</div>
+                        <div class="version-info">创建时间: 2026-01-17 08:30:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">冲突描述: 终端term005和term006生成了相同的分析ID</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 锁定管理页面 -->
+            <div id="lock-management-page" class="page">
+                <button class="btn btn-secondary" onclick="navigateTo('dashboard-page')" style="margin-bottom: 16px;">
+                    &#8592; 返回
+                </button>
+                
+                <div class="card" style="margin-bottom: 16px;">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">锁定统计</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">当前锁定数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">3</div>
+                            <div class="stat-label">待释放锁定</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">2</div>
+                            <div class="stat-label">锁定冲突</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">8</div>
+                            <div class="stat-label">今日新增锁定</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-bottom: 16px;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" class="input" placeholder="搜索锁定..." style="flex: 1;">
+                    </div>
+                    <div style="display: flex; gap: 8px; overflow-x: auto;">
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有终端</button>
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有分析ID</button>
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有状态</button>
+                    </div>
+                </div>
+                
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">锁定列表</h2>
+                <div>
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">lock789</span>
+                            <div>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 4px;" onclick="viewLockDetail('lock789')">
+                                    查看
+                                </button>
+                                <button class="btn" style="font-size: 12px; padding: 4px 8px;">
+                                    释放
+                                </button>
+                            </div>
+                        </div>
+                        <div class="version-info">分析ID: an123 | 终端ID: term001</div>
+                        <div class="version-info">锁定类型: 写入锁</div>
+                        <div class="version-info">锁定时间: 2026-01-17 10:00:00</div>
+                        <div class="version-info">过期时间: 2026-01-17 11:00:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">锁定描述: 分析结果编辑中</div>
+                    </div>
+                    
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">lock790</span>
+                            <div>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 4px;" onclick="viewLockDetail('lock790')">
+                                    查看
+                                </button>
+                                <button class="btn" style="font-size: 12px; padding: 4px 8px;">
+                                    释放
+                                </button>
+                            </div>
+                        </div>
+                        <div class="version-info">分析ID: an124 | 终端ID: term002</div>
+                        <div class="version-info">锁定类型: 写入锁</div>
+                        <div class="version-info">锁定时间: 2026-01-17 09:30:00</div>
+                        <div class="version-info">过期时间: 2026-01-17 10:30:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">锁定描述: 冲突解决中</div>
+                    </div>
+                    
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">lock791</span>
+                            <div>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px; margin-right: 4px;" onclick="viewLockDetail('lock791')">
+                                    查看
+                                </button>
+                                <button class="btn btn-danger" style="font-size: 12px; padding: 4px 8px;">
+                                    强制释放
+                                </button>
+                            </div>
+                        </div>
+                        <div class="version-info">分析ID: an125 | 终端ID: term003</div>
+                        <div class="version-info">锁定类型: 写入锁</div>
+                        <div class="version-info">锁定时间: 2026-01-17 08:00:00</div>
+                        <div class="version-info">过期时间: 2026-01-17 09:00:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">锁定描述: 终端异常, 锁定未释放</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 日志管理页面 -->
+            <div id="log-management-page" class="page">
+                <button class="btn btn-secondary" onclick="navigateTo('dashboard-page')" style="margin-bottom: 16px;">
+                    &#8592; 返回
+                </button>
+                
+                <div class="card" style="margin-bottom: 16px;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" class="input" placeholder="搜索日志..." style="flex: 1;">
+                    </div>
+                    <div style="display: flex; gap: 8px; overflow-x: auto;">
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有终端</button>
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有分析ID</button>
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有操作类型</button>
+                    </div>
+                </div>
+                
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">日志列表</h2>
+                <div>
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">log1001</span>
+                            <span class="badge badge-success">INFO</span>
+                        </div>
+                        <div class="version-info">分析ID: an123 | 终端ID: term001</div>
+                        <div class="version-info">操作类型: 分析完成</div>
+                        <div class="version-info">时间: 2026-01-17 10:00:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">描述: 视频分析完成，版本v1.2.0</div>
+                    </div>
+                    
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">log1002</span>
+                            <span class="badge badge-warning">WARN</span>
+                        </div>
+                        <div class="version-info">分析ID: an123 | 终端ID: term002</div>
+                        <div class="version-info">操作类型: 冲突检测</div>
+                        <div class="version-info">时间: 2026-01-17 10:30:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">描述: 检测到标签冲突，生成冲突ID cf456</div>
+                    </div>
+                    
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">log1003</span>
+                            <span class="badge badge-success">INFO</span>
+                        </div>
+                        <div class="version-info">分析ID: an123 | 终端ID: term001</div>
+                        <div class="version-info">操作类型: 锁定获取</div>
+                        <div class="version-info">时间: 2026-01-17 09:45:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">描述: 成功获取分析结果的写入锁，锁定ID lock789</div>
+                    </div>
+                    
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">log1004</span>
+                            <span class="badge badge-error">ERROR</span>
+                        </div>
+                        <div class="version-info">分析ID: an125 | 终端ID: term003</div>
+                        <div class="version-info">操作类型: 锁定异常</div>
+                        <div class="version-info">时间: 2026-01-17 08:00:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">描述: 终端异常断开连接，锁定未正常释放</div>
+                    </div>
+                    
+                    <div class="version-item">
+                        <div class="version-header">
+                            <span class="version-number">log1005</span>
+                            <span class="badge badge-success">INFO</span>
+                        </div>
+                        <div class="version-info">分析ID: an124 | 终端ID: term002</div>
+                        <div class="version-info">操作类型: 数据同步</div>
+                        <div class="version-info">时间: 2026-01-17 09:30:00</div>
+                        <div class="version-info" style="color: #374151; margin-top: 4px;">描述: 分析结果同步到终端term003成功</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 视频管理页面 -->
+            <div id="video-management-page" class="page">
+                <button class="btn btn-secondary" onclick="navigateTo('dashboard-page')" style="margin-bottom: 16px;">
+                    &#8592; 返回
+                </button>
+                
+                <div class="card" style="margin-bottom: 16px;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" class="input" placeholder="搜索视频..." style="flex: 1;">
+                    </div>
+                    <div style="display: flex; gap: 8px; overflow-x: auto;">
+                        <button class="btn btn-secondary" style="white-space: nowrap;">所有视频</button>
+                        <button class="btn btn-secondary" style="white-space: nowrap;">已分析</button>
+                        <button class="btn btn-secondary" style="white-space: nowrap;">待分析</button>
+                        <button class="btn btn-secondary" style="white-space: nowrap;">分析中</button>
+                    </div>
+                </div>
+                
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">视频列表</h2>
+                <div>
+                    <div class="version-item" style="padding-bottom: 16px;">
+                        <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                            <div style="width: 80px; height: 60px; background-color: #F3F4F6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                视频
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; margin-bottom: 4px;">视频1.mp4</div>
+                                <div style="font-size: 12px; color: #6B7280; margin-bottom: 2px;">大小: 120MB | 时长: 5:00</div>
+                                <div style="font-size: 12px; color: #6B7280;">分析状态: <span class="badge badge-success">已完成</span></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" style="flex: 1; font-size: 12px; padding: 6px 8px;" onclick="viewAnalysis('an123')">
+                                查看分析结果
+                            </button>
+                            <button class="btn btn-secondary" style="flex: 1; font-size: 12px; padding: 6px 8px;">
+                                重新分析
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="version-item" style="padding-bottom: 16px;">
+                        <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                            <div style="width: 80px; height: 60px; background-color: #F3F4F6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                视频
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; margin-bottom: 4px;">视频2.mp4</div>
+                                <div style="font-size: 12px; color: #6B7280; margin-bottom: 2px;">大小: 80MB | 时长: 3:30</div>
+                                <div style="font-size: 12px; color: #6B7280;">分析状态: <span class="badge badge-success">已完成</span></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" style="flex: 1; font-size: 12px; padding: 6px 8px;" onclick="viewAnalysis('an124')">
+                                查看分析结果
+                            </button>
+                            <button class="btn btn-secondary" style="flex: 1; font-size: 12px; padding: 6px 8px;">
+                                重新分析
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="version-item" style="padding-bottom: 16px;">
+                        <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                            <div style="width: 80px; height: 60px; background-color: #F3F4F6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                视频
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; margin-bottom: 4px;">视频3.mp4</div>
+                                <div style="font-size: 12px; color: #6B7280; margin-bottom: 2px;">澶у皬: 200MB |
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部导航栏 -->
+        <footer class="bottom-nav">
+            <a href="#" class="nav-item active" onclick="navigateTo('dashboard-page')">
+                <i>&#9776;</i>
+                <span>首页</span>
+            </a>
+            <a href="#" class="nav-item" onclick="navigateTo('video-management-page')">
+                <i>&#128250;</i>
+                <span>视频</span>
+            </a>
+            <a href="#" class="nav-item" onclick="navigateTo('version-management-page')">
+                <i>&#128279;</i>
+                <span>版本</span>
+            </a>
+            <a href="#" class="nav-item" onclick="navigateTo('log-management-page')">
+                <i>&#128221;</i>
+                <span>日志</span>
+            </a>
+        </footer>
+    </div>
+
+    <!-- JavaScript代码 -->
+    <script>
+        // 登录功能
+        function login() {
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
+            
+            // 简单的登录验证
+            if (username && password) {
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+                showToast('登录成功');
+            } else {
+                showToast('请输入用户名和密码', 'error');
+            }
+        }
+
+        // 切换菜单
+        function toggleMenu() {
+            showToast('菜单功能正在开发中...');
+        }
+
+        // 页面导航
+        function navigateTo(pageId) {
+            // 隐藏所有页面
+            var pages = document.querySelectorAll('.page');
+            pages.forEach(function(page) {
+                page.classList.remove('active');
+            });
+            
+            // 显示目标页面
+            var targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                
+                // 更新页面标题
+                var titles = {
+                    'dashboard-page': '首页',
+                    'analysis-detail-page': '分析详情',
+                    'version-management-page': '版本管理',
+                    'conflict-management-page': '冲突管理',
+                    'lock-management-page': '锁定管理',
+                    'log-management-page': '日志管理',
+                    'video-management-page': '视频管理',
+                    'sync-management-page': '同步管理'
+                };
+                
+                if (titles[pageId]) {
+                    document.getElementById('page-title').textContent = titles[pageId];
+                }
+                
+                // 更新底部导航栏的活动状态
+                var navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach(function(item) {
+                    item.classList.remove('active');
+                });
+                
+                // 根据页面ID设置对应的底部导航项为活动状态
+                if (pageId === 'dashboard-page') {
+                    navItems[0].classList.add('active');
+                } else if (pageId === 'video-management-page') {
+                    navItems[1].classList.add('active');
+                } else if (pageId === 'version-management-page') {
+                    navItems[2].classList.add('active');
+                } else if (pageId === 'log-management-page') {
+                    navItems[3].classList.add('active');
+                }
+            }
+        }
+
+        // 查看分析结果
+        function viewAnalysis(analysisId) {
+            // 模拟加载分析数据
+            document.getElementById('detail-video-name').textContent = '视频' + analysisId.substring(2);
+            document.getElementById('detail-analysis-id').textContent = analysisId;
+            document.getElementById('detail-terminal-id').textContent = 'term001';
+            document.getElementById('detail-version').textContent = 'v1.2.0';
+            document.getElementById('detail-confidence').textContent = '0.92';
+            
+            // 导航到分析详情页
+            navigateTo('analysis-detail-page');
+            showToast('正在加载分析结果...');
+        }
+
+        // 同步数据
+        function syncData() {
+            showToast('正在同步数据...');
+            // 模拟同步过程
+            setTimeout(function() {
+                showToast('数据同步完成');
+            }, 1000);
+        }
+
+        // 触发检查
+        function triggerCheck() {
+            showToast('正在触发数据一致性检查...');
+            // 模拟检查过程
+            setTimeout(function() {
+                showToast('数据一致性检查完成');
+            }, 1500);
+        }
+
+        // 切换部分显示
+        function toggleSection(sectionId) {
+            var section = document.getElementById(sectionId);
+            if (section) {
+                if (section.style.display === 'none') {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            }
+        }
+
+        // 对比版本差异
+        function compareVersions() {
+            showToast('版本对比功能正在开发中...');
+        }
+
+        // 锁定分析结果
+        function lockAnalysis() {
+            showToast('正在锁定分析结果...');
+            setTimeout(function() {
+                showToast('分析结果已锁定');
+            }, 1000);
+        }
+
+        // 同步分析结果到其他终端
+        function syncAnalysis() {
+            showToast('正在同步到其他终端...');
+            setTimeout(function() {
+                showToast('同步完成');
+            }, 1500);
+        }
+
+        // 查看冲突
+        function viewConflict(conflictId) {
+            navigateTo('conflict-management-page');
+            showToast('正在查看冲突: ' + conflictId);
+        }
+
+        // 查看冲突详情
+        function viewConflictDetail(conflictId) {
+            showToast('正在查看冲突详情: ' + conflictId);
+        }
+
+        // 查看锁定详情
+        function viewLockDetail(lockId) {
+            showToast('正在查看锁定详情: ' + lockId);
+        }
+
+        // 显示提示信息
+        function showToast(message, type = 'success') {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.classList.add('show');
+            
+            // 3秒后隐藏提示
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
