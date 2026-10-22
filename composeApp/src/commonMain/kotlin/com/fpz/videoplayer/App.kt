@@ -26,17 +26,15 @@ import androidx.compose.ui.unit.dp
 import com.fpz.videoplayer.player.IPlayerController
 import kotlinx.coroutines.launch
 
-private const val DEMO_URL = "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-
 @Composable
 fun App(controller: IPlayerController) {
     val state by controller.playbackState.collectAsState()
     val scope = rememberCoroutineScope()
-    var url by remember { mutableStateOf(DEMO_URL) }
+    var url by remember { mutableStateOf(defaultVideoUri()) }
 
     LaunchedEffect(Unit) {
         controller.initialize()
-        controller.load(DEMO_URL)
+        controller.load(defaultVideoUri())
     }
 
     Column(
