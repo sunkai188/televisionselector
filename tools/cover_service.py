@@ -7,7 +7,9 @@
 接口：GET /cover?path=<视频路径>&strategy=low|mid|high
 """
 
+import hashlib
 import io
+import json
 import os
 import threading
 
@@ -225,6 +227,215 @@ def _frontal_from_insight(face):
     except Exception:
         return 0.5
 
+
+# ==================== 分析缓存 + 重复检测 + 人物分组 ====================
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ANALYSIS_DIR = os.path.join(BASE_DIR, 'analysis_cache')
+HASHES_DIR = os.path.join(ANALYSIS_DIR, 'hashes')
+EMBEDDINGS_DIR = os.path.join(ANALYSIS_DIR, 'embeddings')
+
+
+def _ensure_analysis_dirs():
+    os.makedirs(HASHES_DIR, exist_ok=True)
+    os.makedirs(EMBEDDINGS_DIR, exist_ok=True)
+
+
+def _path_key(path):
+    return hashlib.sha256(path.encode('utf-8')).hexdigest()
+
+
+def _video_fingerprint(path):
+    st = os.stat(path)
+    return (st.st_mtime, st.st_size)
+
+
+def _load_json(fp):
+    if not os.path.exists(fp):
+        return None
+    try:
+        with open(fp, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def _save_json(fp, data):
+    with open(fp, 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+
+
+def _dhash(frame, hash_size=8):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    resized = cv2.resize(gray, (hash_size + 1, hash_size))
+    diff = resized[:, 1:] > resized[:, :-1]
+    h = 0
+    for bit in diff.flatten():
+        h = (h << 1) | (1 if bool(bit) else 0)
+    return h
+
+
+def _hamming(a, b):
+    return bin(a ^ b).count('1')
+
+
+def _frame_hashes(path, max_frames=30):
+    cap = cv2.VideoCapture(path)
+    if not cap.isOpened():
+        return []
+    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+    step = max(1, int(fps))
+    hashes = []
+    idx = 0
+    while len(hashes) < max_frames:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        if idx % step == 0:
+            hashes.append(_dhash(frame))
+        idx += 1
+    cap.release()
+    return hashes
+
+
+def _get_or_compute_hashes(path):
+    _ensure_analysis_dirs()
+    key = _path_key(path)
+    fp = os.path.join(HASHES_DIR, key + '.json')
+    mtime, size = _video_fingerprint(path)
+    cached = _load_json(fp)
+    if cached and cached.get('mtime') == mtime and cached.get('size') == size:
+        return cached.get('hashes') or []
+    hashes = _frame_hashes(path)
+    _save_json(fp, {'mtime': mtime, 'size': size, 'hashes': hashes})
+    return hashes
+
+
+def _video_dominant_embedding(path, max_frames=15):
+    fa = get_insightface_app()
+    cap = cv2.VideoCapture(path)
+    if not cap.isOpened():
+        return None
+    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+    step = max(1, int(fps))
+    clusters = []
+    idx = 0
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        if idx % step == 0:
+            for face in fa.get(frame):
+                emb = face.normed_embedding
+                best_i, best_sim = -1, -1.0
+                for i, c in enumerate(clusters):
+                    sim = float(np.dot(emb, c['centroid']))
+                    if sim > best_sim:
+                        best_sim, best_i = sim, i
+                if best_i >= 0 and best_sim > 0.4:
+                    c = clusters[best_i]
+                    c['count'] += 1
+                    c['centroid'] = _l2norm(c['centroid'] * c['count'] + emb)
+                else:
+                    clusters.append({'centroid': emb, 'count': 1})
+        idx += 1
+    cap.release()
+    if not clusters:
+        return None
+    top = max(clusters, key=lambda c: c['count'])
+    return top['centroid'].tolist()
+
+
+def _get_or_compute_embedding(path):
+    _ensure_analysis_dirs()
+    key = _path_key(path)
+    fp = os.path.join(EMBEDDINGS_DIR, key + '.json')
+    mtime, size = _video_fingerprint(path)
+    cached = _load_json(fp)
+    if cached and cached.get('mtime') == mtime and cached.get('size') == size:
+        return cached.get('embedding')
+    emb = _video_dominant_embedding(path)
+    _save_json(fp, {'mtime': mtime, 'size': size, 'embedding': emb})
+    return emb
+
+
+def _cosine(a, b):
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    na = np.linalg.norm(a)
+    nb = np.linalg.norm(b)
+    if na < 1e-8 or nb < 1e-8:
+        return 0.0
+    return float(np.dot(a, b) / (na * nb))
+
+
+def _find_duplicates(paths, hashes_map, threshold=0.7):
+    pairs = []
+    n = len(paths)
+    for i in range(n):
+        for j in range(i + 1, n):
+            a, b = paths[i], paths[j]
+            ha = hashes_map.get(a) or []
+            hb = hashes_map.get(b) or []
+            if not ha or not hb:
+                continue
+            matched = 0
+            for x in ha:
+                for y in hb:
+                    if _hamming(x, y) <= 10:
+                        matched += 1
+                        break
+            if matched / max(len(ha), 1) >= threshold:
+                pairs.append([a, b])
+    return pairs
+
+
+def _cluster_persons(paths, embeddings_map, threshold=0.5):
+    groups = []
+    uncategorized = []
+    for p in paths:
+        emb = embeddings_map.get(p)
+        if emb is None:
+            uncategorized.append(p)
+            continue
+        best_i, best_sim = -1, -1.0
+        for i, g in enumerate(groups):
+            sim = _cosine(emb, g['centroid'])
+            if sim > best_sim:
+                best_sim, best_i = sim, i
+        if best_i >= 0 and best_sim > threshold:
+            groups[best_i]['videos'].append(p)
+            g = groups[best_i]
+            old = np.asarray(g['centroid'], dtype=float)
+            new = np.asarray(emb, dtype=float)
+            g['centroid'] = _l2norm(old * (len(g['videos']) - 1) + new).tolist()
+        else:
+            groups.append({'centroid': emb, 'videos': [p]})
+    return groups, uncategorized
+
+
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    data = request.get_json(force=True, silent=True) or {}
+    paths = data.get('paths', [])
+    if not isinstance(paths, list):
+        return jsonify({'error': 'paths must be a list'}), 400
+    paths = [p for p in paths if os.path.exists(p)]
+    with _cover_lock:
+        hashes_map = {}
+        embeddings_map = {}
+        for p in paths:
+            hashes_map[p] = _get_or_compute_hashes(p)
+            embeddings_map[p] = _get_or_compute_embedding(p)
+        dup_pairs = _find_duplicates(paths, hashes_map)
+        groups, uncategorized = _cluster_persons(paths, embeddings_map)
+    persons = []
+    for i, g in enumerate(groups):
+        persons.append({'id': i, 'rep': g['videos'][0], 'videos': g['videos']})
+    return jsonify({
+        'duplicates': dup_pairs,
+        'persons': persons,
+        'uncategorized': uncategorized,
+    })
 
 @app.route('/cover', methods=['GET'])
 def cover():

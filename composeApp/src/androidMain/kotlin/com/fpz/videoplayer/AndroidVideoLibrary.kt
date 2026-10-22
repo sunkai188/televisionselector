@@ -17,11 +17,15 @@ class AndroidVideoLibrary : IVideoLibrary {
     override suspend fun listVideos(directory: String): List<VideoItem> = withContext(Dispatchers.IO) {
         val dir = File(directory)
         if (!dir.isDirectory) return@withContext emptyList()
-        dir.listFiles { f -> f.isFile && f.extension.lowercase() in extensions }
-            ?.sortedBy { it.name }
-            ?.map { VideoItem(it.absolutePath, it.name) }
-            ?: emptyList()
+        dir.walkTopDown()
+            .filter { it.isFile && it.extension.lowercase() in extensions }
+            .sortedBy { it.name }
+            .map { VideoItem(it.absolutePath, it.name) }
+            .toList()
     }
+
+    override suspend fun analyze(videos: List<VideoItem>): AnalysisResult =
+        AnalysisResult(emptySet(), emptyList(), videos)
 
     override suspend fun loadCover(video: VideoItem, strategy: CoverStrategy): ImageBitmap? = withContext(Dispatchers.IO) {
         // Android 端暂未接入 ML 封面，忽略 strategy，用 MediaMetadataRetriever 抓帧

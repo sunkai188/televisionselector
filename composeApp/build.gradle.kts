@@ -41,6 +41,7 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.vlcj)
             runtimeOnly(libs.vlcj.natives)
+            implementation(libs.org.json)
         }
     }
 }
