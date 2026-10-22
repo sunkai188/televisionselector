@@ -17,6 +17,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -31,6 +32,9 @@ class DesktopVideoLibrary : IVideoLibrary {
 
     private val httpClient: HttpClient = HttpClient.newBuilder().build()
     private val serviceBase = "http://127.0.0.1:8765/cover"
+
+    /** 封面缓存目录（相对运行目录）。 */
+    private val cacheDir = File("cover_cache").apply { mkdirs() }
 
     private val extensions = setOf(
         "mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "m4v", "mpg", "mpeg", "ts", "3gp",
@@ -47,19 +51,31 @@ class DesktopVideoLibrary : IVideoLibrary {
 
     override suspend fun loadCover(video: VideoItem, strategy: CoverStrategy): ImageBitmap? =
         withContext(Dispatchers.IO) {
-            // 先尝试 Python 侧车服务
-            val fromService = runCatching {
-                fetchCoverFromService(video.uri, strategy.wireName)?.toComposeImageBitmap()
-            }.getOrNull()
-            if (fromService != null) {
-                fromService
-            } else {
-                // 服务未启动或失败时，回退到 VLCJ 抓帧（整帧）
-                runCatching {
-                    captureFrame(video.uri)?.toComposeImageBitmap()
+            val cacheFile = cacheFileFor(video, strategy)
+            // 1. 命中缓存直接读
+            if (cacheFile.exists()) {
+                return@withContext runCatching {
+                    ImageIO.read(cacheFile)?.toComposeImageBitmap()
                 }.getOrNull()
             }
+            // 2. 提取（先服务，失败回退 VLCJ 抓帧）
+            val image = runCatching {
+                fetchCoverFromService(video.uri, strategy.wireName)
+            }.getOrNull() ?: captureFrame(video.uri)
+            // 3. 写入缓存
+            if (image != null) {
+                runCatching { ImageIO.write(image, "png", cacheFile) }
+            }
+            image?.toComposeImageBitmap()
         }
+
+    private fun cacheFileFor(video: VideoItem, strategy: CoverStrategy): File {
+        val key = video.uri + "|" + strategy.wireName
+        val hash = MessageDigest.getInstance("SHA-256")
+            .digest(key.toByteArray(StandardCharsets.UTF_8))
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        return File(cacheDir, hash + ".png")
+    }
 
     private fun fetchCoverFromService(uri: String, strategy: String): BufferedImage? {
         val encoded = URLEncoder.encode(uri, StandardCharsets.UTF_8)
@@ -75,8 +91,11 @@ class DesktopVideoLibrary : IVideoLibrary {
 
     private fun captureFrame(uri: String): BufferedImage? {
         val player = factory.mediaPlayers().newEmbeddedMediaPlayer()
+        val canvas = Canvas()
         return try {
-            player.videoSurface().set(factory.videoSurfaces().newVideoSurface(Canvas()))
+            // 关键：让 Canvas 拥有原生 peer，否则 VLC 无法渲染、videoOutput 不会触发
+            canvas.addNotify()
+            player.videoSurface().set(factory.videoSurfaces().newVideoSurface(canvas))
 
             val latch = CountDownLatch(1)
             player.events().addMediaPlayerEventListener(object : MediaPlayerEventAdapter() {

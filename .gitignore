@@ -2,6 +2,8 @@
 .gradle/
 build/
 3rd/
+composeApp/build/
+composeApp/cover_cache/
 # Android
 local.properties
 *.apk
